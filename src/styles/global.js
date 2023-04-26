@@ -12,6 +12,7 @@ export const GlobalStyle = createGlobalStyle`
         --vanilla: #f1ede0;
         --black: #0c0d0d;
         --orange: #c85311;
+        --grey: #666360
     }
 
     body{
