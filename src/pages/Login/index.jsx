@@ -5,7 +5,11 @@ import {
   StyledContainer,
 } from "./styles";
 import { ButtonComp } from "../../components/Button";
-import { Link, useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import {
+  Link,
+  Redirect,
+  useHistory,
+} from "react-router-dom/cjs/react-router-dom.min";
 import { Input } from "../../components/Input";
 import { FiUser, FiMail, FiLock } from "react-icons/fi";
 import { useForm } from "react-hook-form";
@@ -13,19 +17,13 @@ import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import api from "../../services/api";
 import { toast } from "react-toastify";
-import { Redirect } from "react-router-dom/cjs/react-router-dom";
 
-export const Signup = ({ authenticated }) => {
+export const Login = ({ authenticated, setAuthenticated }) => {
   const schema = yup.object().shape({
-    name: yup.string().required("Campo Obrigatório!"),
     email: yup.string().email("Email inválido!").required("Campo Obrigatório!"),
     password: yup
       .string()
       .min(8, "Mínimo de 8 dígitos")
-      .required("Campo Obrigatório!"),
-    passwordConfirm: yup
-      .string()
-      .oneOf([yup.ref("password")], "Senhas Diferentes")
       .required("Campo Obrigatório!"),
   });
 
@@ -39,16 +37,21 @@ export const Signup = ({ authenticated }) => {
 
   const history = useHistory();
 
-  const onSubmitFunction = ({ name, email, password }) => {
-    const user = { name, email, password };
-    console.log(user);
+  const onSubmitFunction = (data) => {
     api
-      .post("/register", user)
+      .post("/login", data)
       .then((response) => {
-        toast.success("Sucesso!");
-        return history.push("/login");
+        console.log(response);
+        const { accessToken, user } = response.data;
+
+        localStorage.setItem("@Doit:token", JSON.stringify(accessToken));
+        localStorage.setItem("@Doit:user", JSON.stringify(user));
+
+        setAuthenticated(true);
+
+        return history.push("/dashboard");
       })
-      .catch((err) => toast.error("Erro!"));
+      .catch((err) => toast.error("Email ou senha inválidos"));
   };
 
   if (authenticated) {
@@ -57,19 +60,10 @@ export const Signup = ({ authenticated }) => {
 
   return (
     <StyledContainer>
-      <Background />
       <Content>
         <AnimationContainer>
           <form onSubmit={handleSubmit(onSubmitFunction)}>
             <h1>Cadastro</h1>
-            <Input
-              register={register}
-              name="name"
-              icon={FiUser}
-              label="Nome"
-              placeholder="Seu nome"
-              error={errors.name?.message}
-            />
             <Input
               register={register}
               name="email"
@@ -87,22 +81,14 @@ export const Signup = ({ authenticated }) => {
               type="password"
               error={errors.password?.message}
             />
-            <Input
-              register={register}
-              name="passwordConfirm"
-              icon={FiLock}
-              label="Confirmação da senha"
-              placeholder="Confirmação da senha"
-              type="password"
-              error={errors.passwordConfirm?.message}
-            />
             <ButtonComp type="submit">Enviar</ButtonComp>
             <p>
-              Já tem uma conta? Faça o <Link to="/login">login</Link>
+              Não tem conta? Faça o seu <Link to="/signup">cadastro</Link>
             </p>
           </form>
         </AnimationContainer>
       </Content>
+      <Background />
     </StyledContainer>
   );
 };
